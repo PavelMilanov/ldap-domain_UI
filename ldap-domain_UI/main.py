@@ -1,13 +1,21 @@
-from ldap3 import Server, Connection, ALL, NTLM
-from environs import Env
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from schemas import dc_connector
 
 
-env = Env()
-env.read_env()
+app = FastAPI(
+    title='Domain UI API',
+    description='Domain UI API.',
+    version='0.1.0',
+    prefix='/api/v1/ldap3'
+)
 
+app.include_router(dc_connector.router)
 
-server = Server(env('DC'), get_info=ALL)
-conn = Connection(server, user=env('domain_user'), password=env('domain_password') , auto_bind=True, authentication=NTLM)
-
-conn.search(f"ou=Customer,ou=Customers,ou=FSO,dc={env('domain_root')},dc={env('domain_forest')}", '(&(objectclass=person)(cn=customer_test))', attributes=['*'])
-print(conn.entries)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=['GET', 'POST', 'DELETE'],
+    allow_headers=['*'],
+)
